@@ -15,6 +15,16 @@ public class ImageLoader {
         sprites[4] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_yellow/yellow_max.png")));
         return sprites;
     }
+    
+    public BufferedImage[] getRedStarshipSprites() throws IOException {
+        BufferedImage[] sprites = new BufferedImage[5];
+        sprites[0] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_red/red_min.png")));
+        sprites[1] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_red/red_low.png")));
+        sprites[2] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_red/red_mid.png")));
+        sprites[3] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_red/red_high.png")));
+        sprites[4] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_red/red_max.png")));
+        return sprites;
+    }
 
     public BufferedImage getBackgroundImage() throws IOException {
         return ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/img/space_battle_bg.png")));
