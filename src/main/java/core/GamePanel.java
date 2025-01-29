@@ -5,10 +5,12 @@ import config.GameConfig;
 import entity.Bullet;
 import entity.Starship;
 import handler.KeyHandler;
+import util.ImageLoader;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,8 @@ public class GamePanel extends JPanel implements Runnable{
     private Starship starship =  new Starship(this, keyH);
     private List<Bullet> bullets = new ArrayList<>();
     private long lastShotTime = 0;
-    private static final long SHOT_COOLDOWN = 500; // Увеличиваем задержку с 250 до 500 миллисекунд
+    private static final long SHOT_COOLDOWN = 500;
+    private BufferedImage backgroundImage;
 
     public GamePanel(){
         setPreferredSize(new Dimension(DisplayConfig.SCREEN_WIDTH, DisplayConfig.SCREEN_HEIGHT));
@@ -27,6 +30,13 @@ public class GamePanel extends JPanel implements Runnable{
         setDoubleBuffered(true);
         addKeyListener(keyH);
         setFocusable(true);
+
+        try {
+            ImageLoader imageLoader = new ImageLoader();
+            backgroundImage = imageLoader.getBackgroundImage();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void startGameThread() {
@@ -58,6 +68,8 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     public void update(){
+        if (!starship.isAlive()) return;
+        
         starship.update();
         
         // Обновление пуль
@@ -72,9 +84,7 @@ public class GamePanel extends JPanel implements Runnable{
             if (currentTime - lastShotTime >= SHOT_COOLDOWN) {
                 bullets.add(new Bullet(
                     starship.x + starship.sprite.getWidth() / 2 - 3,
-                    starship.y,
-                    8,
-                    1
+                    starship.y
                 ));
                 lastShotTime = currentTime;
             }
@@ -84,6 +94,11 @@ public class GamePanel extends JPanel implements Runnable{
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+        
+        // Отрисовка фона
+        if (backgroundImage != null) {
+            g2.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        }
         
         // Отрисовка корабля
         starship.draw(g2);

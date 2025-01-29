@@ -1,20 +1,19 @@
 package entity;
 
+import config.GameConfig;
+
 import java.awt.*;
 
 public class Bullet extends Entity {
     private boolean active = true;
-    private int damage;
     
-    public Bullet(int x, int y, int speed, int damage) {
+    public Bullet(int x, int y) {
         this.x = x;
         this.y = y;
-        this.speed = speed;
-        this.damage = damage;
     }
     
     public void update() {
-        y -= speed; // Пуля летит вверх
+        y -= GameConfig.BULLET_SPEED; // Пуля летит вверх
         if (y < 0) active = false;
     }
     

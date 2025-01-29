@@ -14,43 +14,27 @@ public class KeyHandler implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int code = e.getKeyCode();
-        
-        if (code == KeyEvent.VK_W) {
-            upPressed = true;
-        }
-        if (code == KeyEvent.VK_S) {
-            downPressed = true;
-        }
-        if (code == KeyEvent.VK_A) {
-            leftPressed = true;
-        }
-        if (code == KeyEvent.VK_D) {
-            rightPressed = true;
-        }
-        if (code == KeyEvent.VK_SPACE) {
-            spacePressed = true;
-        }
+        setState(e.getKeyCode(), true);
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        int code = e.getKeyCode();
-        
-        if (code == KeyEvent.VK_W) {
-            upPressed = false;
+        setState(e.getKeyCode(), false);
+    }
+
+    private void setState(int keyCode, boolean pressed) {
+        if (keyCode == KeyEvent.VK_W) {
+            upPressed = pressed;
+        } else if (keyCode == KeyEvent.VK_S) {
+            downPressed = pressed;
+        } else if (keyCode == KeyEvent.VK_A) {
+            leftPressed = pressed;
+        } else if (keyCode == KeyEvent.VK_D) {
+            rightPressed = pressed;
         }
-        if (code == KeyEvent.VK_S) {
-            downPressed = false;
-        }
-        if (code == KeyEvent.VK_A) {
-            leftPressed = false;
-        }
-        if (code == KeyEvent.VK_D) {
-            rightPressed = false;
-        }
-        if (code == KeyEvent.VK_SPACE) {
-            spacePressed = false;
+
+        if (keyCode == KeyEvent.VK_SPACE) {
+            spacePressed = pressed;
         }
     }
 

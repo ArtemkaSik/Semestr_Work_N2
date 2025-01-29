@@ -15,4 +15,8 @@ public class ImageLoader {
         sprites[4] = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/player_yellow/yellow_max.png")));
         return sprites;
     }
+
+    public BufferedImage getBackgroundImage() throws IOException {
+        return ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/img/space_battle_bg.png")));
+    }
 }
