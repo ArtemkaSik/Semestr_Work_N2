@@ -10,6 +10,10 @@ import java.io.IOException;
 
 public class WindowSettings {
 
+    private static JTextField nameField;
+    private static JTextField ipField;
+    private static JCheckBox hostCheckBox;
+
     public static void setupMainWindow(JFrame frame) {
         BackgroundPanel backgroundPanel = new BackgroundPanel();
         backgroundPanel.setLayout(new GridBagLayout());
@@ -50,19 +54,19 @@ public class WindowSettings {
 
         // Поле имени игрока
         JLabel nameLabel = createStyledLabel("Имя игрока:", labelFont, textColor);
-        JTextField nameField = createStyledTextField("Игрок 1", textColor);
+        nameField = createStyledTextField("Игрок 1", textColor);
         formPanel.add(nameLabel);
         formPanel.add(nameField);
 
         // Поле IP адреса
         JLabel ipLabel = createStyledLabel("IP сервера:", labelFont, textColor);
-        JTextField ipField = createStyledTextField("localhost", textColor);
+        ipField = createStyledTextField("localhost", textColor);
         formPanel.add(ipLabel);
         formPanel.add(ipField);
 
         // Чекбокс хоста
         JLabel hostLabel = createStyledLabel("Хост игры?", labelFont, textColor);
-        JCheckBox hostCheckBox = createStyledCheckBox();
+        hostCheckBox = createStyledCheckBox();
         formPanel.add(hostLabel);
         formPanel.add(hostCheckBox);
 
@@ -86,25 +90,36 @@ public class WindowSettings {
 
         // Обработчик клика
         button.addActionListener(e -> {
+            boolean isHost = hostCheckBox.isSelected();
+            String ipAddress = ipField.getText().trim();
+
             // Создаем новое окно для игры
             JFrame gameWindow = new JFrame("Space Game");
             gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             gameWindow.setResizable(false);
-            
+
             // Создаем и добавляем игровую панель
-            GamePanel gamePanel = new GamePanel();
+            GamePanel gamePanel = new GamePanel(isHost, ipAddress);
             gameWindow.add(gamePanel);
-            
+
             // Подгоняем размер окна под размер панели
             gameWindow.pack();
-            
+
             // Размещаем окно по центру экрана
             gameWindow.setLocationRelativeTo(null);
-            
+
             // Делаем окно видимым и запускаем игровой поток
             gameWindow.setVisible(true);
             gamePanel.startGameThread();
-            
+
+            // Добавляем обработчик закрытия окна
+            gameWindow.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                    gamePanel.cleanup();
+                }
+            });
+
             // Закрываем окно лобби
             SwingUtilities.getWindowAncestor(button).dispose();
         });
