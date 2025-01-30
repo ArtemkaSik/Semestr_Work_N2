@@ -11,6 +11,10 @@ public class CollisionChecker {
         this.gp = gamePanel;
     }
 
+    public CollisionChecker(){
+
+    }
+
     public void check(Entity entity){
         if (entity.x < 0) entity.x = 0;
         if (entity.x > gp.getWidth() - entity.sprite.getWidth()) entity.x = gp.getWidth() - entity.sprite.getWidth();

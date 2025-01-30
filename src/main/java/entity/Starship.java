@@ -37,6 +37,8 @@ public class Starship extends Entity {
         setDefaultValues();
         loadSprites();
     }
+
+    public Starship(){}
     
     private void setDefaultValues() {
         x = DisplayConfig.SCREEN_WIDTH / 2 - 24;
