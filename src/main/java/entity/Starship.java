@@ -61,7 +61,7 @@ public class Starship extends Entity {
     }
     
     public void takeDamage() {
-        currentHp -= GameConfig.BULLET_L_DAMAGE;
+        currentHp -= GameConfig.BULLET_DAMAGE;
         if (currentHp < 0) currentHp = 0;
     }
     
