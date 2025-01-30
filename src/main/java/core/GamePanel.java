@@ -5,6 +5,7 @@ import config.GameConfig;
 import entity.Bullet;
 import entity.Starship;
 import handler.KeyHandler;
+import util.CollisionChecker;
 import util.ImageLoader;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ public class GamePanel extends JPanel implements Runnable{
     private long lastShotTime = 0;
     private static final long SHOT_COOLDOWN = 500;
     private BufferedImage backgroundImage;
+    public CollisionChecker collisionChecker = new CollisionChecker(this);
 
     public GamePanel(){
         setPreferredSize(new Dimension(DisplayConfig.SCREEN_WIDTH, DisplayConfig.SCREEN_HEIGHT));

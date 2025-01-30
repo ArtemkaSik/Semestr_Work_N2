@@ -2,6 +2,8 @@ package entity;
 
 import core.GamePanel;
 import handler.KeyHandler;
+import lombok.Getter;
+import lombok.Setter;
 import util.ImageLoader;
 import config.DisplayConfig;
 import config.GameConfig;
@@ -10,6 +12,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+@Getter
+@Setter
 public class Starship extends Entity {
     private GamePanel gp;
     private KeyHandler keyH;
@@ -22,7 +26,7 @@ public class Starship extends Entity {
     private static final int ANIMATION_SPEED = 8; // Чем меньше число, тем быстрее анимация
     
     // Параметры здоровья
-    private int currentHp;
+    private int currentHp = GameConfig.STARSHIP_HP;
     private static final int HP_BAR_WIDTH = 50;
     private static final int HP_BAR_HEIGHT = 8;
     
@@ -94,12 +98,9 @@ public class Starship extends Entity {
         } else if (keyH.isRightPressed()) {
             x += GameConfig.STARSHIP_SPEED;
         }
-        
+
         // Ограничение движения в пределах экрана
-        if (x < 0) x = 0;
-        if (x > gp.getWidth() - sprite.getWidth()) x = gp.getWidth() - sprite.getWidth();
-        if (y < 0) y = 0;
-        if (y > gp.getHeight() - sprite.getHeight()) y = gp.getHeight() - sprite.getHeight();
+        gp.collisionChecker.check(this);
         
         // Обновление анимации
         updateAnimation();
