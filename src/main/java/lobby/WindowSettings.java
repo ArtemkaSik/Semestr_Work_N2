@@ -107,9 +107,10 @@ public class WindowSettings {
 
             boolean isHost = hostCheckBox.isSelected();
             String ipAddress = ipField.getText();
+            String playerName = nameField.getText();
 
             // Создаем и добавляем игровую панель
-            Game game = new Game(isHost, ipAddress);
+            Game game = new Game(isHost, ipAddress, playerName);
             gameWindow.add(game.getPanel());
             game.start();
 

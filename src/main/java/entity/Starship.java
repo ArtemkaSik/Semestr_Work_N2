@@ -34,16 +34,6 @@ public class Starship extends Entity {
 
     //Выстрелы, совершённые кораблём
     private ArrayList<Bullet> bullets = new ArrayList();
-    
-    public Starship(KeyHandler keyH) {
-        this.keyH = keyH;
-
-        this.shotH = new ShotHandler(keyH);
-        this.moveH = new MoveHandler(keyH);
-        
-        setDefaultValues();
-        loadSprites();
-    }
 
     public Starship(KeyHandler keyH, boolean isHost) {
         this.keyH = keyH;
@@ -53,11 +43,6 @@ public class Starship extends Entity {
         this.moveH = new MoveHandler(keyH);
         this.isHost = isHost;
 
-        setDefaultValues();
-        loadSprites();
-    }
-
-    public Starship(){
         setDefaultValues();
         loadSprites();
     }
@@ -92,8 +77,11 @@ public class Starship extends Entity {
     }
     
     public void takeDamage() {
-        currentHp -= GameConfig.BULLET_DAMAGE;
-        if (currentHp < 0) currentHp = 0;
+        if (isAlive()) {
+            currentHp -= GameConfig.BULLET_DAMAGE;
+            if (currentHp < 0) currentHp = 0;
+            System.out.println(isHost ? "Host" : "Client" + " took damage! HP: " + currentHp);
+        }
     }
     
     public boolean isAlive() {
@@ -117,30 +105,36 @@ public class Starship extends Entity {
     }
     
     public void draw(Graphics2D g2) {
-        if (isAlive()){
-            // Отрисовка корабля
-            g2.drawImage(sprite, x, y, null);
-
-            // Отрисовка полоски здоровья
-            int hpBarX = x + (sprite.getWidth() - HP_BAR_WIDTH) / 2;
-            int hpBarY = y - 15;
-
-            // Фон полоски здоровья
-            g2.setColor(Color.GRAY);
-            g2.fillRect(hpBarX, hpBarY, HP_BAR_WIDTH, HP_BAR_HEIGHT);
-
-            // Текущее здоровье
-            float healthPercentage = (float) currentHp / GameConfig.STARSHIP_HP;
-            int currentWidth = (int) (HP_BAR_WIDTH * healthPercentage);
-            g2.setColor(Color.GREEN);
-            g2.fillRect(hpBarX, hpBarY, currentWidth, HP_BAR_HEIGHT);
-
-            // Обводка полоски здоровья
-            g2.setColor(Color.WHITE);
-            g2.drawRect(hpBarX, hpBarY, HP_BAR_WIDTH, HP_BAR_HEIGHT);
-
-            getBullets().forEach(bullet -> bullet.draw(g2));
+        // Отрисовка корабля
+        g2.drawImage(sprite, x, y, null);
+        
+        // Отрисовка полоски здоровья
+        drawHealthBar(g2);
+        
+        // Отрисовка пуль
+        for (Bullet bullet : bullets) {
+            if (bullet.isActive()) {
+                bullet.draw(g2);
+            }
         }
+    }
+    
+    private void drawHealthBar(Graphics2D g2) {
+        int healthBarX = x;
+        int healthBarY = y - 15; // Размещаем полоску здоровья над кораблем
+        
+        // Фон полоски здоровья (красный)
+        g2.setColor(Color.RED);
+        g2.fillRect(healthBarX, healthBarY, HP_BAR_WIDTH, HP_BAR_HEIGHT);
+        
+        // Текущее здоровье (зеленый)
+        g2.setColor(Color.GREEN);
+        int currentHealthWidth = (int) ((currentHp / (float) GameConfig.STARSHIP_HP) * HP_BAR_WIDTH);
+        g2.fillRect(healthBarX, healthBarY, currentHealthWidth, HP_BAR_HEIGHT);
+        
+        // Обводка полоски здоровья
+        g2.setColor(Color.WHITE);
+        g2.drawRect(healthBarX, healthBarY, HP_BAR_WIDTH, HP_BAR_HEIGHT);
     }
 
     public ArrayList<Bullet> getBullets(){
@@ -151,14 +145,11 @@ public class Starship extends Entity {
         return currentHp;
     }
 
-    public void updatePlayer(int x, int y, int health){
-        this.setX(x);
-        this.setY(y);
-        this.setCurrentHp(health);
-    }
-
-    public void setCurrentHp(int currentHp) {
-        this.currentHp = currentHp;
+    public void updatePlayer(int x, int y, int health) {
+        this.x = x;
+        this.y = y;
+        this.currentHp = health;
+        updateAnimation();
     }
 
     public boolean getIsHost(){
@@ -167,5 +158,13 @@ public class Starship extends Entity {
 
     public void setHealth(int health) {
         this.currentHp = health;
+    }
+
+    public int getWidth() {
+        return sprite != null ? sprite.getWidth() : 48;
+    }
+
+    public int getHeight() {
+        return sprite != null ? sprite.getHeight() : 48; // 48 - это примерная высота спрайта
     }
 }

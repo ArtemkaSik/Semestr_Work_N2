@@ -5,7 +5,6 @@ import entity.Bullet;
 import entity.Starship;
 import network.packet.Packet;
 import network.packet.connection.ConnectPacket;
-import network.packet.connection.DisconnectPacket;
 import network.packet.object.BulletPacket;
 import network.packet.object.StarshipPacket;
 import network.types.Types;
@@ -25,7 +24,7 @@ public class GameClient implements Runnable {
     private boolean running;
     private boolean connected;
     private boolean bothPlayersConnected;
-//    private final CollisionChecker collisionChecker;
+    private final CollisionChecker collisionChecker;
 
     private final Starship localPlayer;
     private final Starship enemyPlayer;
@@ -39,7 +38,7 @@ public class GameClient implements Runnable {
         this.running = true;
         this.connected = false;
         this.bothPlayersConnected = false;
-//        this.collisionChecker = new CollisionChecker();
+        this.collisionChecker = new CollisionChecker();
 
         // Отправляем пакет подключения
         sendConnectPacket();
@@ -111,20 +110,29 @@ public class GameClient implements Runnable {
                 posPacket.getHealth()
         );
 
-        // Обновляем пули врага
+        // Обновляем пули врага и проверяем попадания
         enemyPlayer.getBullets().forEach(bullet -> {
             bullet.update(enemyPlayer.getIsHost());
 
             // Проверяем попадание во врага
-//            if (bullet.isActive() && collisionChecker.checkBulletPlayerCollision(bullet, localPlayer)) {
-//                bullet.notActive();
-//                localPlayer.takeDamage();
-//                System.out.println("Health: " + localPlayer.getCurrentHp());
-//            }
+            if (bullet.isActive() && collisionChecker.checkBulletPlayerCollision(bullet, localPlayer)) {
+                bullet.notActive();
+                localPlayer.takeDamage();
+                System.out.println("Hit! Local player health: " + localPlayer.getCurrentHp());
+            }
+        });
+
+        // Проверяем попадания наших пуль по врагу
+        localPlayer.getBullets().forEach(bullet -> {
+            if (bullet.isActive() && collisionChecker.checkBulletPlayerCollision(bullet, enemyPlayer)) {
+                bullet.notActive();
+                System.out.println("Hit enemy! " + enemyPlayer.getCurrentHp() + "hp left.");
+            }
         });
 
         // Удаляем неактивные пули
         enemyPlayer.getBullets().removeIf(bullet -> !bullet.isActive());
+        localPlayer.getBullets().removeIf(bullet -> !bullet.isActive());
     }
 
     public void sendPlayerPosition() {

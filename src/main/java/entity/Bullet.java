@@ -7,6 +7,7 @@ import java.awt.*;
 
 public class Bullet extends Entity {
     private boolean active = true;
+
     
     public Bullet(int x, int y) {
         this.x = x;
@@ -24,7 +25,7 @@ public class Bullet extends Entity {
     
     public void draw(Graphics2D g2) {
         g2.setColor(Color.RED);
-        g2.fillOval(x, y, 6, 10);
+        g2.fillOval(x, y, GameConfig.BULLET_WIDTH, GameConfig.BULLET_HEIGHT);
     }
     
     public boolean isActive() {
@@ -33,5 +34,13 @@ public class Bullet extends Entity {
 
     public void notActive() {
         active = false;
+    }
+
+    public int getWidth() {
+        return GameConfig.BULLET_WIDTH;
+    }
+
+    public int getHeight() {
+        return GameConfig.BULLET_HEIGHT;
     }
 }

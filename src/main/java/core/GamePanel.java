@@ -6,6 +6,7 @@ import handler.KeyHandler;
 import network.GameClient;
 import network.GameServer;
 import util.ImageLoader;
+import util.SoundPlayer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,21 +23,26 @@ public class GamePanel extends JPanel implements Runnable{
     private Starship enemy;
 
     private BufferedImage backgroundImage;
+    private final SoundPlayer soundPlayer;
 
-//    public final CollisionChecker collisionChecker;
     private GameClient gameClient;
     private boolean gameStarted;
     private String waitingMessage;
+    private String playerName;
+    private boolean gameOver;
+    private String winnerMessage;
 
-    public GamePanel(boolean isHost, String serverIp){
+    public GamePanel(boolean isHost, String serverIp, String playerName){
         setPreferredSize(new Dimension(DisplayConfig.SCREEN_WIDTH, DisplayConfig.SCREEN_HEIGHT));
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
 
         this.keyH = new KeyHandler();
+        this.soundPlayer = new SoundPlayer();
 
+        this.playerName = playerName;
+        this.gameOver = false;
 
-//        this.collisionChecker = new CollisionChecker(this);
         this.starship = new Starship(keyH, isHost);
         this.enemy = new Starship(null, !isHost);
         this.gameStarted = false;
@@ -57,6 +63,8 @@ public class GamePanel extends JPanel implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        soundPlayer.playMusic();
     }
 
     public void startGameThread() {
@@ -93,9 +101,19 @@ public class GamePanel extends JPanel implements Runnable{
             waitingMessage = null;
         }
 
-        if (gameStarted && gameClient.areBothPlayersConnected()) {
+        if (gameStarted && gameClient.areBothPlayersConnected() && !gameOver) {
             starship.update();
             gameClient.sendPlayerPosition();
+
+            // Проверка окончания игры
+            if (!starship.isAlive() || !enemy.isAlive()) {
+                gameOver = true;
+                if (!starship.isAlive()) {
+                    winnerMessage = enemy.getIsHost() ? "Победил: Игрок 1" : "Победил: " + playerName;
+                } else {
+                    winnerMessage = starship.getIsHost() ? "Победил: " + playerName : "Победил: Игрок 1";
+                }
+            }
         }
     }
 
@@ -110,20 +128,45 @@ public class GamePanel extends JPanel implements Runnable{
 
         // Отрисовка сообщения ожидания
         if (waitingMessage != null) {
-            g2.setColor(Color.WHITE);
-            g2.setFont(new Font("Arial", Font.BOLD, 30));
-            FontMetrics fm = g2.getFontMetrics();
-            int messageWidth = fm.stringWidth(waitingMessage);
-            int x = (getWidth() - messageWidth) / 2;
-            int y = getHeight() / 2;
-            g2.drawString(waitingMessage, x, y);
+            drawCenteredMessage(g2, waitingMessage, 30);
         }
 
         if (gameStarted) {
             starship.draw(g2);
             enemy.draw(g2);
+
+            // Отрисовка сообщения о победителе
+            if (gameOver && winnerMessage != null) {
+                drawGameOverMessage(g2);
+            }
         }
 
         g2.dispose();
+    }
+
+    private void drawCenteredMessage(Graphics2D g2, String message, int fontSize) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, fontSize));
+        FontMetrics fm = g2.getFontMetrics();
+        int messageWidth = fm.stringWidth(message);
+        int x = (getWidth() - messageWidth) / 2;
+        int y = getHeight() / 2;
+        g2.drawString(message, x, y);
+    }
+
+    private void drawGameOverMessage(Graphics2D g2) {
+        // Создаем полупрозрачный фон
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+
+        // Рисуем заголовок "GAME OVER"
+        drawCenteredMessage(g2, "GAME END", 50);
+
+        g2.setFont(new Font("Arial", Font.BOLD, 30));
+        FontMetrics fm = g2.getFontMetrics();
+        int messageWidth = fm.stringWidth(winnerMessage);
+        int x = (getWidth() - messageWidth) / 2;
+        int y = getHeight() / 2 + 50;
+        g2.drawString(winnerMessage, x, y);
     }
 }
