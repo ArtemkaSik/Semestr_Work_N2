@@ -8,7 +8,6 @@ import network.packet.connection.ConnectPacket;
 import network.packet.connection.DisconnectPacket;
 import network.packet.object.BulletPacket;
 import network.packet.object.StarshipPacket;
-import network.packet.Packet;
 import network.types.Types;
 import util.CollisionChecker;
 
@@ -17,10 +16,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static network.types.Types.*;
 
 public class GameClient implements Runnable {
     private final DatagramSocket socket;
@@ -28,21 +24,20 @@ public class GameClient implements Runnable {
     private final byte[] receiveData;
     private boolean running;
     private boolean connected;
-    private final CollisionChecker collisionChecker;
+//    private final CollisionChecker collisionChecker;
 
     private final Starship localPlayer;
     private final Starship enemyPlayer;
 
-    public GameClient(String serverIp, Starship localPlayer) throws IOException {
-        System.out.println("Initializing client, connecting to server: " + serverIp);
+    public GameClient(String serverIp, Starship localPlayer, Starship enemyPlayer) throws IOException {
         this.socket = new DatagramSocket();
         this.serverAddress = InetAddress.getByName(serverIp);
         this.receiveData = new byte[ServerConfig.BUFFER_SIZE];
-        this.enemyPlayer = new Starship();
+        this.enemyPlayer = enemyPlayer;
         this.localPlayer = localPlayer;
         this.running = true;
         this.connected = false;
-        this.collisionChecker = new CollisionChecker();
+//        this.collisionChecker = new CollisionChecker();
 
         // Отправляем пакет подключения
         sendConnectPacket();
@@ -53,8 +48,7 @@ public class GameClient implements Runnable {
             System.out.println("Sending connect packet to server...");
             sendPacket(new ConnectPacket());
         } catch (IOException e) {
-            System.err.println("Failed to send connect packet: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Failed to send connect packet: " + e.getMessage());
         }
     }
 
@@ -72,8 +66,7 @@ public class GameClient implements Runnable {
                 handlePacket(receivePacket);
             } catch (IOException e) {
                 if (running) {
-                    System.err.println("Error receiving packet: " + e.getMessage());
-                    e.printStackTrace();
+                    System.out.println("Error receiving packet: " + e.getMessage());
                 }
             }
         }
@@ -82,70 +75,49 @@ public class GameClient implements Runnable {
     private void handlePacket(DatagramPacket packet) {
         byte[] data = packet.getData();
         Types type = Types.values()[data[0]];
-        String playerId = packet.getAddress().getHostAddress() + ":" + packet.getPort();
 
         switch (type) {
             case PLAYER_INFO -> {
                 StarshipPacket posPacket = new StarshipPacket(data);
-                updatePlayerPosition(playerId, posPacket);
+                updatePlayerPosition(posPacket);
             }
             case BULLET -> {
                 BulletPacket bulletPacket = new BulletPacket(data);
-                handleBulletData(playerId, bulletPacket);
+                handleBulletData(bulletPacket);
             }
-            case CONNECT_CONFIRM -> {
+            case CONNECT -> {
                 connected = true;
                 System.out.println("Connected to server successfully!");
             }
             case DISCONNECT -> {
-                this.running = false;
+                connected = false;
                 System.out.println("Enemy disconnected");
             }
         }
     }
 
-    private void updatePlayerPosition(String playerId, StarshipPacket posPacket) {
-        Starship player = otherPlayers.computeIfAbsent(playerId, k ->
-                new Player(null, collisionChecker, posPacket.getName())
-        );
-
-        // Обновляем состояние игрока, включая номер спрайта
-        player.updatePlayer(
+    private void updatePlayerPosition(StarshipPacket posPacket) {
+        // Обновляем состояние вражеского корабля
+        enemyPlayer.updatePlayer(
                 posPacket.getX(),
                 posPacket.getY(),
-                posPacket.getDirection(),
-                posPacket.getSpriteNum(),
                 posPacket.getHealth()
         );
 
-        player.setName(posPacket.getName());
-        player.updateState(posPacket.isDead());
+        // Обновляем пули врага
+        enemyPlayer.getBullets().forEach(bullet -> {
+            bullet.update(enemyPlayer.getIsHost());
 
-        // Обновляем пули этого игрока с корректным CollisionChecker
-        player.getBullets().forEach(bullet -> {
-            bullet.update(collisionChecker);
-
-            // Проверяем коллизии с локальным игроком
-            if (bullet.isActive() && collisionChecker.checkBulletPlayerCollision(bullet, localPlayer.getWorldSolidArea())) {
-                bullet.setActive(false);
-                // Здесь можно добавить логику урона по игроку
-                localPlayer.takeDamage(bullet.getDamage());
-                System.out.println("Health: " + localPlayer.getHealth());
-            }
-
-            // Проверяем коллизии с другими игроками
-            otherPlayers.forEach((otherId, otherPlayer) -> {
-                if (!otherId.equals(playerId) && // Не проверяем владельца пули
-                        bullet.isActive() &&
-                        collisionChecker.checkBulletPlayerCollision(bullet, otherPlayer.getWorldSolidArea())) {
-                    bullet.setActive(false);
-                    // Здесь можно добавить логику урона по игроку
-                }
-            });
+            // Проверяем попадание во врага
+//            if (bullet.isActive() && collisionChecker.checkBulletPlayerCollision(bullet, localPlayer)) {
+//                bullet.notActive();
+//                localPlayer.takeDamage();
+//                System.out.println("Health: " + localPlayer.getCurrentHp());
+//            }
         });
 
         // Удаляем неактивные пули
-        player.getBullets().removeIf(bullet -> !bullet.isActive());
+        enemyPlayer.getBullets().removeIf(bullet -> !bullet.isActive());
     }
 
     public void sendPlayerPosition() {
@@ -156,40 +128,27 @@ public class GameClient implements Runnable {
         }
 
         try {
-            // Отправляем текущее состояние игрока, включая номер спрайта
-            PlayerDataPacket packet = new PlayerDataPacket(
-                    localPlayer.getWorldX(),
-                    localPlayer.getWorldY(),
-                    localPlayer.getDirection(),
-                    localPlayer.getSpriteNum(), // Получаем текущий номер спрайта
-                    localPlayer.isDead(),
-                    localPlayer.getName(),
-                    localPlayer.getHealth()
+            // Отправляем текущее состояние игрока
+            StarshipPacket packet = new StarshipPacket(
+                    localPlayer.getX(),
+                    localPlayer.getY(),
+                    localPlayer.isAlive(),
+                    localPlayer.getCurrentHp()
             );
             sendPacket(packet);
 
-            // Отправляем данные о пулях и проверяем коллизии
+            // Отправляем данные о пулях
             for (Bullet bullet : localPlayer.getBullets()) {
                 if (bullet.isActive()) {
-                    // Проверяем коллизии с другими игроками
-                    otherPlayers.values().forEach(otherPlayer -> {
-                        if (collisionChecker.checkBulletPlayerCollision(bullet, otherPlayer.getWorldSolidArea()) && !otherPlayer.isDead()) {
-                            bullet.setActive(false);
-                        }
-                    });
-
-                    if (bullet.isActive()) {
-                        BulletDataPacket bulletPacket = new BulletDataPacket(
-                                bullet.getWorldX(),
-                                bullet.getWorldY(),
-                                bullet.getDirection()
-                        );
-                        sendPacket(bulletPacket);
-                    }
+                    BulletPacket bulletPacket = new BulletPacket(
+                            bullet.getX(),
+                            bullet.getY()
+                    );
+                    sendPacket(bulletPacket);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Failed to send player position: " + e.getMessage());
+            System.out.println("Failed to send player position: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -209,18 +168,13 @@ public class GameClient implements Runnable {
         return enemyPlayer;
     }
 
-    private void handleBulletData(String playerId, BulletPacket packet) {
-        Starship starship = enemyPlayer.get(playerId);
-        if (starship != null) {
-            // Проверяем, нет ли уже такой пули
-            boolean bulletExists = starship.getBullets().stream()
-                    .anyMatch(b -> b.getWorldX() == packet.getX() &&
-                            b.getWorldY() == packet.getY() &&
-                            b.getDirection() == packet.getDirection());
+    private void handleBulletData(BulletPacket packet) {
+        boolean bulletExists = enemyPlayer.getBullets().stream()
+                .anyMatch(b -> b.getX() == packet.getX() &&
+                        b.getY() == packet.getY());
 
-            if (!bulletExists) {
-                starship.addBullet(packet.getX(), packet.getY(), packet.getDirection());
-            }
+        if (!bulletExists) {
+            enemyPlayer.getBullets().add(new Bullet(packet.getX(), packet.getY()));
         }
     }
 }

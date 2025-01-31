@@ -6,6 +6,6 @@ import network.types.Types;
 public class ConnectConfirmPacket implements Packet {
     @Override
     public byte[] getData() {
-        return new byte[] { (byte) Types.CONNECT_CONFIRM.ordinal() };
+        return new byte[] { (byte) Types.CONNECT.ordinal() };
     }
 }

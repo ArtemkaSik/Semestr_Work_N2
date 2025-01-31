@@ -5,7 +5,26 @@ import java.awt.image.BufferedImage;
 
 public class Entity {
     public int x, y;
-    public int speed;
     public BufferedImage sprite;
-    public String direction;
+
+    public int getX(){
+        return x;
+    }
+
+    public int getY(){
+        return y;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public void setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 }

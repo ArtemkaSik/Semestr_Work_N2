@@ -1,6 +1,6 @@
 package lobby;
 
-import core.GamePanel;
+import core.Game;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -34,42 +34,56 @@ public class WindowSettings {
         JComponent formPanel = createFormPanel();
         panel.add(formPanel, BorderLayout.CENTER);
 
-        // Кнопка старта
-        JButton startButton = createStartButton();
-        panel.add(startButton, BorderLayout.SOUTH);
-
         return panel;
     }
 
     private static JComponent createFormPanel() {
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 15, 25));
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setOpaque(false);
 
         Font labelFont = new Font("Arial", Font.BOLD, 16);
         Color textColor = Color.WHITE;
 
         // Поле имени игрока
+        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        namePanel.setOpaque(false);
         JLabel nameLabel = createStyledLabel("Имя игрока:", labelFont, textColor);
         JTextField nameField = createStyledTextField("Игрок 1", textColor);
-        formPanel.add(nameLabel);
-        formPanel.add(nameField);
+        namePanel.add(nameLabel);
+        namePanel.add(nameField);
+        formPanel.add(namePanel);
 
         // Поле IP адреса
+        JPanel ipPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        ipPanel.setOpaque(false);
         JLabel ipLabel = createStyledLabel("IP сервера:", labelFont, textColor);
         JTextField ipField = createStyledTextField("localhost", textColor);
-        formPanel.add(ipLabel);
-        formPanel.add(ipField);
+        ipPanel.add(ipLabel);
+        ipPanel.add(ipField);
+        formPanel.add(ipPanel);
+
+        // Поле порта
+        JPanel portPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        portPanel.setOpaque(false);
+        JLabel portLabel = createStyledLabel("Port сервера:", labelFont, textColor);
+        JTextField portField = createStyledTextField("5000", textColor);
+        portPanel.add(portLabel);
+        portPanel.add(portField);
+        formPanel.add(portPanel);
 
         // Чекбокс хоста
+        JPanel hostPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        hostPanel.setOpaque(false);
         JLabel hostLabel = createStyledLabel("Хост игры?", labelFont, textColor);
         JCheckBox hostCheckBox = createStyledCheckBox();
-        formPanel.add(hostLabel);
-        formPanel.add(hostCheckBox);
+        hostPanel.add(hostLabel);
+        hostPanel.add(hostCheckBox);
+        formPanel.add(hostPanel);
 
-        return formPanel;
-    }
-
-    private static JButton createStartButton() {
+        // Кнопка
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setOpaque(false);
         JButton button = new JButton("НАЧАТЬ ИГРУ!");
         button.setPreferredSize(new Dimension(200, 50));
 
@@ -90,26 +104,32 @@ public class WindowSettings {
             JFrame gameWindow = new JFrame("Space Game");
             gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             gameWindow.setResizable(false);
-            
+
+            boolean isHost = hostCheckBox.isSelected();
+            String ipAddress = ipField.getText();
+
             // Создаем и добавляем игровую панель
-            GamePanel gamePanel = new GamePanel();
-            gameWindow.add(gamePanel);
-            
+            Game game = new Game(isHost, ipAddress);
+            gameWindow.add(game.getPanel());
+            game.start();
+
             // Подгоняем размер окна под размер панели
             gameWindow.pack();
-            
+
             // Размещаем окно по центру экрана
             gameWindow.setLocationRelativeTo(null);
-            
+
             // Делаем окно видимым и запускаем игровой поток
             gameWindow.setVisible(true);
-            gamePanel.startGameThread();
-            
+
             // Закрываем окно лобби
             SwingUtilities.getWindowAncestor(button).dispose();
         });
 
-        return button;
+        buttonPanel.add(button);
+        formPanel.add(buttonPanel);
+
+        return formPanel;
     }
 
     private static JLabel createStyledLabel(String text, Font font, Color color) {

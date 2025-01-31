@@ -18,14 +18,15 @@ public class BulletPacket implements Packet {
 
     public BulletPacket(byte[] data) {
         ByteBuffer buffer = ByteBuffer.wrap(data);
-        buffer.get(); // Пропускаем тип пакета
+        buffer.get();
+        //Получаем значения из буфера
         this.x = buffer.getInt();
         this.y = buffer.getInt();
     }
 
     @Override
     public byte[] getData() {
-        ByteBuffer buffer = ByteBuffer.allocate(4);
+        ByteBuffer buffer = ByteBuffer.allocate(9);
         buffer.put((byte) Types.BULLET.ordinal());
         buffer.putInt(x);
         buffer.putInt(y);
