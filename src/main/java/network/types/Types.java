@@ -5,4 +5,5 @@ public enum Types {
     DISCONNECT,
     PLAYER_INFO,
     BULLET,
+    GAME_START
 }

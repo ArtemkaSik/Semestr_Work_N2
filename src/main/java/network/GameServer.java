@@ -77,6 +77,13 @@ public class GameServer implements Runnable {
                 clients.put(clientId, clientInfo);
                 System.out.println("Player connected: " + clientId);
                 sendConnection(packet.getAddress(), packet.getPort());
+                
+                // Check if we have 2 players and notify them to start the game
+                if (clients.size() == 2) {
+                    System.out.println("Two players connected, starting the game!");
+                    byte[] startData = new byte[]{(byte) Types.GAME_START.ordinal()};
+                    broadcastToAllClients(startData);
+                }
             }
             case DISCONNECT -> {
                 clients.remove(clientId);
@@ -109,6 +116,18 @@ public class GameServer implements Runnable {
                 );
                 socket.send(broadcastPacket);
             }
+        }
+    }
+
+    private void broadcastToAllClients(byte[] data) throws IOException {
+        for (ClientInfo client : clients.values()) {
+            DatagramPacket packet = new DatagramPacket(
+                data,
+                data.length,
+                client.address(),
+                client.port()
+            );
+            socket.send(packet);
         }
     }
 

@@ -24,6 +24,7 @@ public class GameClient implements Runnable {
     private final byte[] receiveData;
     private boolean running;
     private boolean connected;
+    private boolean bothPlayersConnected;
 //    private final CollisionChecker collisionChecker;
 
     private final Starship localPlayer;
@@ -37,6 +38,7 @@ public class GameClient implements Runnable {
         this.localPlayer = localPlayer;
         this.running = true;
         this.connected = false;
+        this.bothPlayersConnected = false;
 //        this.collisionChecker = new CollisionChecker();
 
         // Отправляем пакет подключения
@@ -91,7 +93,12 @@ public class GameClient implements Runnable {
             }
             case DISCONNECT -> {
                 connected = false;
+                bothPlayersConnected = false;
                 System.out.println("Enemy disconnected");
+            }
+            case GAME_START -> {
+                bothPlayersConnected = true;
+                System.out.println("Both players connected! Game starting...");
             }
         }
     }
@@ -176,5 +183,9 @@ public class GameClient implements Runnable {
         if (!bulletExists) {
             enemyPlayer.getBullets().add(new Bullet(packet.getX(), packet.getY()));
         }
+    }
+
+    public boolean areBothPlayersConnected() {
+        return bothPlayersConnected;
     }
 }
